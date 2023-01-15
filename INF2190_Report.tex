@@ -1,0 +1,476 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Impacts of Human Characteristics on Reaction Time (RT) to Visual Stimuli},
+  pdfauthor={Zaid Abdulaziz, Karrie Chou, Tengchieh (Max) Chuang, Bhanvi Gupta, Lidia Kojic, Jean Paul Ngezigihe},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Impacts of Human Characteristics on Reaction Time (RT) to Visual
+Stimuli}
+\author{Zaid Abdulaziz, Karrie Chou, Tengchieh (Max) Chuang,\\
+Bhanvi Gupta, Lidia Kojic, Jean Paul Ngezigihe}
+\date{2022-12-06}
+
+\begin{document}
+\maketitle
+
+\scriptsize
+
+\hypertarget{abstract}{%
+\section{Abstract}\label{abstract}}
+
+We used data from Michael Franke's IDA Mental Chronometry dataset to
+understand the impact of demographic features like age, education, sex
+and handedness on visual input reaction times (RT). We created two
+multiple linear regression models, and ran a classifier on one to
+evaluate its predictive capabilities. Overall, both models were
+successful at identifying certain significant demographic features that
+influence RT, and support the need for considerations in accessible
+design for information systems and digital content delivery.
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+We are consuming visual data at a very fast pace in our everyday lives.
+With the burgeoning trend of content creation, content creators are
+pushed to deliver more in less time. This shift on social media is very
+apparent; we can see more short videos (reels, shorts, stories etc)
+being promoted than the long ones. It has become a well-known fact that
+in order to be successful on social media platforms, one must follow
+this trend to get more hits. Therefore, it becomes important for us to
+analyse how visual inputs impact reaction times and how information is
+processed by certain demographic groups. With this knowledge, we can
+design accessible and useful information systems that effectively
+deliver relevant content to a wide variety of end users.
+
+\hypertarget{the-mental-chronometry-dataset}{%
+\subsection{The Mental Chronometry
+Dataset}\label{the-mental-chronometry-dataset}}
+
+For this study, we will be using Michael Franke's IDA Mental Chronometry
+Dataset We have extended the concepts used in the book by taking
+education and age also into consideration while analysing the data.
+
+The dataset contains entries from 50 participants in the study which
+records the differences in reaction times across different tasks. The
+trials have 3 parts: reacting to any stimulus shown (responding with a
+spacebar for a circle and square), reacting to a specific stimulus
+(responding with a space bar for only to square/circle), and reacting
+differently to 2 different stimuli (responding with different alphabets
+for circles and squares). These are classified as reaction tasks,
+Go/No-Go tasks and discrimination tasks, respectively. The dataset
+includes demographic information such as education, age, gender, and
+handedness in addition to the reaction times and correctness regarding
+stimulus type.
+
+\hypertarget{summary-plots}{%
+\subsection{Summary Plots}\label{summary-plots}}
+
+Below are a set of plots and a table intended to describe some of the
+demographic explanatory variables we are interested in for subsequent
+analysis.
+
+\begin{center}\includegraphics[width=5.75in]{Introduction_Plots} \end{center}
+
+\textbf{Figure 1:} From left to right, histograms showcasing the
+distribution of the education, age, gender, and handedness variables.
+
+\textbf{Table 1:} Summary statistics of select binary explanatory
+variables in the sample. For handedness\_num, 0 refers to left-handed
+participants and 1 refers to right-handed participants. For education, 0
+refers to participants whose highest completed level of education is
+high school or a college degree and 1 refers to participants whose
+highest completed level of education is a university degree. For gender,
+0 refers to participants who identify as male and 1 refers to
+participants who identify as female. Note that null values were excluded
+from the counts.
+
+\begin{center}\includegraphics[width=6.15in]{Introduction_Summary_Table} \end{center}
+
+\hypertarget{methods}{%
+\section{Methods}\label{methods}}
+
+The dataset had two features of note which we decided to use to assess
+participants' performance on reaction time tasks:
+
+\begin{itemize}
+\tightlist
+\item
+  The amount of time each participant took to complete one of the three
+  tasks, measured by \emph{RT}.
+\item
+  The amount of time each participant took to complete all three tasks,
+  measured by \emph{total\_time\_spent}.
+\end{itemize}
+
+\hypertarget{multiple-linear-regressions}{%
+\subsection{Multiple Linear
+Regressions}\label{multiple-linear-regressions}}
+
+In order to test our research hypothesis, we settled on doing
+\textbf{two multiple linear regressions}, one for each dependent
+variable. Our goal was determine the strength and character of the
+relationship between our dependent and independent variables. The
+mathematical formula for linear regression is as follows:
+\(y = w^T x + b\) where \(x = (x_1, …, x_D)\) represents a vector of
+features that are used as model parameters, y is the dependent variable,
+w is the weights of the parameters, and b is the bias/line intercept.
+
+Finally, to assess the significance of each independent variable, we
+assume \(\alpha\) = 0.05.
+
+The summaries of both models' coefficients and their interpretations can
+be found in the \emph{Results and Discussion} section.
+
+\hypertarget{feature-encoding}{%
+\subsection{Feature Encoding}\label{feature-encoding}}
+
+Some of the features in our dataset are non-numeric (handedness, gender
+and education). The multiple linear regression model works best with
+numeric variables. Therefore, we used a simple label encoder that turns
+the target labels to values between 0 and 1. Handedness, gender, and
+education are numerically represented by handedness\_num, gender\_num
+and education\_num. These are the variables we used to construct our two
+regression models.
+
+\hypertarget{correlation-matrices}{%
+\subsection{Correlation Matrices}\label{correlation-matrices}}
+
+As mentioned, there are two models we wished to study:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Dependent variable being reaction time (RT).
+\item
+  Dependent variable being total\_time\_spent.
+\end{enumerate}
+
+The independent variables of interest are: handedness, gender, age, and
+education. We created a correlation table with each of them and the
+dependent variable in question, as well as a correlation matrix with all
+independent variables we considered. See Appendix A and B for detailed
+outputs of our correlation analysis.
+
+To further illustrate the strength of the relationships between each
+dependent and independent variable pair, we plotted a simple linear
+regression of the dependent variable on each independent variable of
+interest. This resulted in 8 individual plots: 4 for each RT-independent
+variable pair, and 4 for each total\_time\_spent-independent variable
+pair. See Appendix C and D for these plots.
+
+\hypertarget{classification-exercise}{%
+\subsection{Classification Exercise}\label{classification-exercise}}
+
+We also wanted to understand how well our proposed models could predict
+whether an individual has satisfactory reaction time. By constructing a
+classifier and evaluating its performance, we can further confirm if our
+findings are statistically significant. The \emph{Naïve Bayes (NB)
+classifier} fits our dataset the best, as our features of interest can
+be assumed to be independent of each other based on the low values shown
+across the correlation matrix. The NB classifier assigns labels to
+observations based on an established prior distribution of labels for a
+feature of interest, which is determined by the training data. We ran
+the classification exercise on our \emph{RT} model.
+
+Amano et al.~(2006) conducted a study on visual stimulus reponse. They
+found that participants react to a slight motion approximately 300 ms
+after it takes place, and that ``the neural activites related to finger
+movement'' were offset by approximately 130-200 ms (Amano et al, 2006).
+Using this finding as a benchmark, 500 ms is our threshold for an ideal
+reaction time in any given task. For the classification algorithm, we
+created a categorical dummy variable which sorts each data point into a
+``good'' reaction time and a ``not good'' reaction time. This will be
+captured in a variable named \emph{good\_reaction}.
+
+We fit an NB classifier to training data, which was a random sample of
+80\% of the original data set, with observations that had missing values
+removed. The remaining 20\% of the dataset was used as a test dataset to
+evaluate the predictive strength of the classifier. The classifier was
+also cross-validated with \(k = 10\) fold cross validation. The results
+of the classification exercise are described in more detail in the
+\emph{Results and Discussion} section.
+
+\hypertarget{results-and-discussion}{%
+\section{Results and Discussion}\label{results-and-discussion}}
+
+\hypertarget{model-1-rt-on-explanatory-variables}{%
+\subsection{Model 1: RT on Explanatory
+Variables}\label{model-1-rt-on-explanatory-variables}}
+
+\textbf{Table 2:} Estimated model coefficients and their standard
+errors, t-values, and p-values for the multiple linear regression of RT
+on the explanatory variables of interest.
+
+\begin{center}\includegraphics[width=3.69in]{Results_Model_1} \end{center}
+
+Our results displayed above show our intercept, our four independent
+variables, and their output coefficients with their p values to
+determine if our variable is statistically significant. The intercept is
+statically significant and tells us that when all independent variables
+are set to zero, then reaction time is estimated to be 314.19 ms. Our
+handedness\_num variable is statistically significant and shows that the
+variable exhibits a positive correlation with RT. The model predicts
+that right-handed individuals have a reaction time that is 31.03 ms
+slower than left-handed individuals. Our gender\_num variable is not
+statically significant so we can safely ignore this variable.
+
+Our age variable is statistically significant and the coefficient for
+age is estimated to be positive correlation with RT. With every unit
+increase of age, the model predicts that RT will increase by
+approximately 2.49 ms. The last independent variable, education\_num,
+had a much different result than our other variables, with a coefficient
+of --18.13. The negative sign is indicative of an inverse relationship
+with RT. The model predicts that university students had a lower RT than
+high school and college students by 18.13 ms. The p-value associated
+with this coefficient is much smaller than 0.05, so this variable is
+statistically significant.
+
+The reason this type of analysis was done is to see the strength of an
+outcome or dependent variable, RT in this case, against our independent
+variables of interest. Handedness had the strongest correlation with RT,
+whereas gender had the weakest relationship with RT and a p-value above
+significance level, meaning that it is not a statistically significant
+factor in predicting one's RT. The most surprising result was the
+negative effect of education level on RT. We can say that handedness is
+the most positively correlated while education is the most negatively
+correlated regarding reaction time.
+
+\hypertarget{model-2-total_time_spent-on-explanatory-variables}{%
+\subsection{Model 2: total\_time\_spent on Explanatory
+Variables}\label{model-2-total_time_spent-on-explanatory-variables}}
+
+\textbf{Table 3:} Estimated model coefficients and their standard
+errors, t-values, and p-values for the multiple linear regression of
+total\_time\_spent on the explanatory variables of interest.
+
+\begin{center}\includegraphics[width=3.7in]{Results_Model_2} \end{center}
+
+When all the predictor variables are at a value of 0, the total time
+spent has a value of 5.08, which is also statistically significant as
+the p-value of 0.00 is less than the significance level set at 0.05. The
+regression coefficient estimated for the handedness variable has a value
+of 0.86 which is statistically significant since p-value = 0.01
+\textless{} 0.05, and therefore indicates a positive relationship where
+every unit increase of handedness, total time spent increases by 0.86.
+The regression coefficient estimated for the gender variable has a value
+of -0.92 which is statistically significant since p-value = 0.00
+\textless{} 0.05, and therefore indicates a negative relationship where
+every unit increase of gender, total time spent decreases by 0.92. The
+regression coefficient estimated for the age variable has a value of
+0.02 which is statistically significant since p-value = 0.01 \textless{}
+0.05, and therefore indicates a positive relationship where every unit
+increase of age, total time spent increases by 0.02. The regression
+coefficient estimated for the education level variable has a value of
+0.17 which is not statistically significant since p-value = 0.2
+\textgreater{} 0.05, and therefore should not be considered.
+
+Overall, this regression analysis allows us to investigate and draw
+conclusions about the strength of the effect each of the predictor
+variables (handedness, gender, age, and education level) has on the
+dependent variable (total time spent) and whether they actually have an
+impact on total time spent at all. Looking at all the regression
+coefficient estimates that were statistically significant, we can
+observe that gender had the largest impact on total time spent as its
+corresponding regression coefficient had the largest absolute value.
+Similarly, we can observe that handedness also has a large impact on
+total time spent, just in a positive direction. Age can be observed to
+have the smallest impact on total time spent according to its much
+smaller regression coefficient value. Lastly, the analysis on education
+level was found to be not significant, which leads to no conclusion on
+its effect being drawn.
+
+\hypertarget{nauxefve-bayes-classification-exercise}{%
+\subsection{Naïve Bayes Classification
+Exercise}\label{nauxefve-bayes-classification-exercise}}
+
+Results from the classification algorithm being run on test data show
+that it labelled 371 good reaction times that were actually good (these
+are true positives). However, there were 89 reaction times that the
+classifier thought were good but were actually not (these are false
+positives).
+
+\textbf{Table 4:} Confusion matrix of results from the classifier being
+run on the test data after it had been trained.
+
+\begin{center}\includegraphics[width=6.11in]{Results_NB_test} \end{center}
+
+The accuracy of the classifier labelling response rates as either good
+or not good compared to the feature's actual value in the test data was
+80.65\% accurate. This is good, as anything below 70\% is not ideal.
+This means our model did a good job in classifying which reaction times
+were actually good and which just appeared to be.
+
+\hypertarget{limitations-and-conclusion}{%
+\section{Limitations and Conclusion}\label{limitations-and-conclusion}}
+
+\hypertarget{limitations}{%
+\subsection{Limitations}\label{limitations}}
+
+The principal limitation with our approach to analyzing and interpreting
+the data is that the causal structure of our explanatory variables and
+the paths through which they impact RT for an individual task and the
+amount of time a study participant needed to complete each task in
+succession is uncertain. It is justifiable to think that while the
+correlation analysis showed that our chosen explanatory variables had
+low correlation with each other, there may be confounders external to
+the study which affect their relationship with each other and with the
+dependent variable in either model. For instance, older individuals may
+have been less likely to attend university based on changing job and
+skill requirements to enter the labour market over time. Alternatively,
+left-handed individuals don't have as many tools which are designed with
+their use in mind, impacting their ability to react promptly to the
+visual stimuli they are presented with.
+
+Another limitation with our methodology comes from the use of multiple
+linear regression models. Since some but not all of our explanatory
+variables had to be coded as binary numeric ones, the linear
+relationship between each of them and the dependent variable based on
+the model in question is difficult to illustrate, even if it exists as
+seen in our Appendix plots. We ultimately chose to go with multiple
+linear regression due to the nature of the raw data and the
+inconsistency across how their values were recorded. We recognize that a
+logistic regression would better illustrate the relationship between
+binary variables and a continuous dependent variable, but with only some
+variables being binary, it was difficult to justify using a multiple
+logistic regression for either model.
+
+Both of these limitations would be rectified, or at the very least,
+mitigated by the inclusion of more descriptive factor levels for the
+features that had to be transformed. By incorporating more levels into
+each factor (for instance, including different education levels or an
+indication of which hand a participant used to complete each task), we
+can easily visualize the relationships between each independent variable
+and the dependent variable.
+
+\hypertarget{conclusion}{%
+\subsection{Conclusion}\label{conclusion}}
+
+Both models support our hypothesis that the chosen demographic features
+influenced an individual's ability to immediately and successfully
+recognize certain visual stimuli and minute changes in them to a
+statistically significant extent. The results reinforce the importance
+of considering accessibility in information system design and content
+creation. While it is difficult to balance the unique needs of everyone
+who interacts with virtually delivered information and the desire to
+create systems which promote immediate engagement with content, the
+findings from this study can motivate the development of assistive tools
+to help individuals meaningfully interact with the information systems
+that they encounter.
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+Amano, K., Goda, N., Nishida, S., Ejima, Y., Takeda, T., \& Ohtani, Y.
+(2006). Estimation of the Timing of Human Visual Perception from
+Magnetoencephalography. \emph{Journal of Neuroscience, 26}(15),
+3981--3991. \url{https://doi.org/10.1523/JNEUROSCI.4343-05.2006}
+
+Franke, M. (2021). \emph{An Introduction to Data Analysis.}
+\url{https://michael-franke.github.io/intro-data-analysis/app-93-data-sets-mental-chronometry.html}
+
+Finnstats. (2021, April 9). \emph{Naive Bayes Classification in R}
+{[}R-bloggers{]}.
+\url{https://www.r-bloggers.com/2021/04/naive-bayes-classification-in-r/}
+
+\newpage
+
+\hypertarget{appendix}{%
+\section{Appendix}\label{appendix}}
+
+\hypertarget{appendix-a}{%
+\subsection{Appendix A:}\label{appendix-a}}
+
+\begin{center}\includegraphics[width=3.09in]{Methodology_RT_cor} \end{center}
+
+\begin{center}\includegraphics[width=3.17in]{Methodology_time_cor} \end{center}
+
+From top to bottom, 1) Pearson's r values for each explanatory variable
+and the dependent variable RT, and 2) Pearson's r values for each
+explanatory variable and the dependent variable total\_time\_spent.
+
+\hypertarget{appendix-b}{%
+\subsection{Appendix B:}\label{appendix-b}}
+
+\begin{center}\includegraphics[width=2.19in]{Methodology_cor_matrix} \end{center}
+
+Correlation matrix of all independent variables of interest. Note the
+low correlation values between many pairs of variables.
+
+\hypertarget{appendix-c}{%
+\subsection{Appendix C:}\label{appendix-c}}
+
+\begin{center}\includegraphics[width=3.17in]{Appendix_A} \end{center}
+
+Plots of all independent variables vs.~RT. From left to right, the
+independent variables are handedness, gender, age, and education.
+
+\hypertarget{appendix-d}{%
+\subsection{Appendix D:}\label{appendix-d}}
+
+\begin{center}\includegraphics[width=3.36in]{Appendix_B} \end{center}
+
+Plots of all independent variables vs.~total\_time\_spent. From left to
+right, the independent variables are handedness, gender, age, and
+education.
+
+\end{document}

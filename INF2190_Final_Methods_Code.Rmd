@@ -1,0 +1,273 @@
+---
+title: "INF2190_Final_Methods_Code"
+author: "Karrie Chou"
+date: "2022-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(aida)
+library(tinytex)
+library(knitr)
+library(corrplot)
+```
+
+# Loading and cleaning data
+Data has been cleaned according to the process described in Michael 
+Franke's Introduction to Data Analysis, Appendix D.1. However, the clean data
+available in the package does not include two variables that we want to incorporate
+into our model: age and education. 
+```{r, include=FALSE}
+mc_data_raw <- aida::data_MC_raw
+
+block_levels <- c("reaction", "goNoGo", "discrimination") # ordering of blocks for plotting, etc. 
+
+mc_data_preprocessed <- mc_data_raw %>% 
+  separate(trial_type, c("block", "stage"), sep = "_", remove = FALSE) %>%
+  mutate(comments = ifelse(is.na(comments), "non given", comments)) %>% 
+  filter(stage == "main") %>% 
+  mutate(
+    block = factor(block, ordered = T, levels = block_levels),
+    response = ifelse(is.na(response), "none", response)
+  ) %>%
+  filter(response != "wait") %>% 
+  rename(
+    handedness = languages, # variable name is simply wrong
+    total_time_spent = timeSpent
+  ) %>% 
+  select(
+    submission_id, 
+    trial_number, 
+    block, 
+    stimulus, 
+    RT, 
+    handedness, 
+    gender, 
+    age, 
+    education, 
+    total_time_spent,
+    comments
+  )
+
+# summary stats (means) for participants
+d_sum_stats_participants <- mc_data_preprocessed %>% 
+  group_by(submission_id, block) %>% 
+  summarise(
+    mean_P = mean(RT)
+  )
+
+# summary stats (means and SDs) for conditions
+d_sum_stats_conditions <- mc_data_preprocessed %>% 
+  group_by(block) %>% 
+  summarise(
+    mean_C = mean(RT),
+    sd_C   = sd(RT)
+  )
+  
+d_sum_stats_participants <- 
+  full_join(
+    d_sum_stats_participants,
+    d_sum_stats_conditions,
+    by = "block"
+  ) %>% 
+  mutate(
+    outlier_P = abs(mean_P - mean_C) > 2 * sd_C
+  )
+
+mc_data_cleaned <- mc_data_preprocessed %>% 
+  filter(submission_id != d_sum_stats_participants$submission_id[1])
+
+mc_data_cleaned <- mc_data_cleaned %>% 
+  full_join(
+    d_sum_stats_conditions,
+    by = "block"
+  ) %>% 
+  mutate(
+    trial_type = case_when(
+      abs(RT - mean_C) > 2 * sd_C ~ "too far from mean",
+      RT < 100 ~ "< 100ms",
+      TRUE ~ "acceptable"
+    ) %>% factor(levels = c("acceptable", "< 100ms", "too far from mean")),
+    trial = 1:nrow(mc_data_cleaned)
+  )
+
+mc_data_cleaned <- mc_data_cleaned %>% 
+  filter(trial_type == "acceptable")
+
+write.csv(mc_data_cleaned, file = "clean_data.csv")
+```
+
+## Coding categorical variables as numeric ones
+To make analysis easier, binary variables of interest should be coded as numeric
+instead of categorical variables. 
+
+```{r}
+mc_data_cleaned <- mc_data_cleaned %>%
+  mutate(education_num = ifelse(education == "high school / college", 0, 1), 
+         handedness_num = ifelse(handedness == "left" | handedness == "Left", 0, 1), 
+         gender_num = ifelse(gender == "male", 0, 1))
+```
+
+Next, we preview the data to ensure it is up to our standards. See the RStudio
+output. 
+```{r, include=FALSE}
+kable(head(mc_data_cleaned, 6))
+```
+
+## Summary statistics tables
+Table 1: Summary statistics of handedness, education, and gender in the sample. 
+For handedness_num, 0 refers to left-handed participants and 1 refers to
+right-handed participants. For education, 0 refers to participants whose highest
+completed level of education is high school or a college degree and 1 refers to 
+participants whose highest completed level of education is a university degree. For
+gender, 0 refers to participants who identify as male and 1 refers to participants who
+identify as female. 
+```{r, echo=FALSE}
+mc_data_cleaned_handedness_summary <- mc_data_cleaned %>%
+  filter(!is.na(handedness_num)) %>%
+  count(handedness_num)
+
+mc_data_cleaned_education_summary <- mc_data_cleaned %>%
+  filter(!is.na(education_num)) %>%
+  count(education_num)
+
+mc_data_cleaned_gender_summary <- mc_data_cleaned %>%
+  filter(!is.na(gender_num)) %>%
+  count(gender_num, .drop = TRUE)
+
+mc_data_cleaned_summary <- cbind(mc_data_cleaned_handedness_summary, 
+                                 mc_data_cleaned_education_summary, 
+                                 mc_data_cleaned_gender_summary)
+kable(mc_data_cleaned_summary)
+```
+
+# Correlation tables and matrix
+There are two models we can construct: one with the dependent variable being RT 
+and another with the dependent variable being total_time_spent. First, we pull 
+all of the characteristics we were interested in analyzing and compare their 
+individual correlations with RT and total_time_spent. The independent variables 
+of interest are: handedness, gender, age, and education. 
+
+Table 2: Correlations of each independent variable with RT. 
+```{r, echo=FALSE}
+RT_cor_matrix <- mc_data_cleaned %>%
+  summarize(RT_handedness_cor = cor(RT, handedness_num, use = "complete.obs"), 
+            RT_gender_cor = cor(RT, gender_num), 
+            RT_age_cor = cor(RT, age), 
+            RT_education_cor = cor(RT, education_num, use = "complete.obs"))
+kable(RT_cor_matrix)
+```
+
+Table 3: Correlations of each independent variable with total_time_spent. 
+```{r, echo=FALSE}
+total_time_spent_cor_matrix <- mc_data_cleaned %>%
+  summarize(time_handedness_cor = cor(total_time_spent, handedness_num, use = "complete.obs"), 
+            time_gender_cor = cor(total_time_spent, gender_num), 
+            time_age_cor = cor(total_time_spent, age), 
+            time_education_cor = cor(total_time_spent, education_num, use = "complete.obs"))
+kable(total_time_spent_cor_matrix)
+```
+
+Figure 1: Correlation matrix for each independent variable. 
+```{r, echo = FALSE}
+IV_data <- cbind(mc_data_cleaned$handedness_num, 
+             mc_data_cleaned$gender_num, 
+             mc_data_cleaned$age, 
+             mc_data_cleaned$education_num)
+IV_cor_matrix <- cor(IV_data, use = "complete.obs")
+rownames(IV_cor_matrix) <- c("handedness_num", "gender_num", "age", "education_num")
+
+corrplot(IV_cor_matrix, method = "shade", addCoef.col = "black")
+```
+
+# Hypothesis testing
+
+## Model 1: RT on demographic characteristics
+We can construct a *multiple linear regression* of RT on each independent variable. 
+To assess the significance of each independent variable, we assume $\alpha$ = 0.05. 
+```{r}
+RT_lm_model <- lm(RT ~ handedness_num + gender_num + age + education_num, 
+                    data = mc_data_cleaned)
+kable(summary(RT_lm_model)$coef)
+```
+
+Handedness, age, and education all have a statistically significant relationship
+with reaction time. 
+
+## Model 2: total_time_spent on demographic characteristics
+We can construct a *multiple linear regression* of total_time_spent on each independent variable. 
+To assess the significance of each independent variable, we assume $\alpha$ = 0.05. 
+```{r}
+time_lm_model <- lm(total_time_spent ~ handedness_num + gender_num + age + education_num, 
+                    data = mc_data_cleaned)
+kable(summary(time_lm_model)$coef)
+```
+
+Handedness, gender, and age all have a statistically significant relationship with total 
+time spent on all 3 reaction time tasks in the study. 
+
+# Plots
+See JP's code. 
+
+# NB classification exercise
+We decided to run a Naive Bayes classification exercise, as our explanatory features 
+can be assumed to be independent because of their low correlations with each other. 
+
+## RT classification algorithm
+
+Amano et al. (2006) conducted a study where eight participants were asked to watch a
+series of dots move on a screen and raise their finger when they first detected any
+motion. The study found that the participants react to a slight motion approximately
+300 ms after it takes place, and that "the neural activites related to finger
+movement" were offset by approximately 130-200 ms. Using this finding as a benchmark, 
+we will set 500 ms as the threshold for an ideal reaction time in any given task. For 
+the classification algorithm, we need to create a categorical dummy variable which 
+sorts each data point into a "good" reaction time and a "not good" reaction time. This
+will be captured in a variable named *good_reaction*. 
+
+### Setting up the training and test data: 
+```{r, echo=FALSE, include=FALSE}
+library(caret)
+```
+
+```{r}
+IV_w_RT_data <- cbind(IV_data, mc_data_cleaned$RT)
+colnames(IV_w_RT_data) <- c("handedness_num", "gender_num", "age", "education_num", "RT")
+IV_w_RT_data <- as.data.frame(IV_w_RT_data) %>%
+  drop_na()
+IV_w_RT_data <- IV_w_RT_data %>% 
+  mutate(good_reaction = ifelse(IV_w_RT_data$RT < 500, "Good", "Not good")) %>%
+  select(handedness_num, gender_num, age, education_num, good_reaction)
+
+set.seed(6)
+training_samples_RT <- IV_w_RT_data$good_reaction %>%
+  createDataPartition(p = 0.8, list = FALSE)
+training_data_RT <- IV_w_RT_data[training_samples_RT, ]
+test_data_RT <- IV_w_RT_data[-training_samples_RT, ]
+```
+
+### Creating the classification model, fitting it to training data, and letting it predict values for test data: 
+```{r, warning=FALSE, results="hide"}
+RT_NB_classification_model <- train(good_reaction ~ ., 
+                                    data = training_data_RT, 
+                                    method = "nb", 
+                                    trControl = trainControl("cv", number = 10))
+#print(RT_NB_classification_model)
+RT_NB_classification_predict <- RT_NB_classification_model %>%
+  predict(test_data_RT)
+```
+
+### Model accuracy: 
+```{r, include=FALSE}
+confusionMatrix(RT_NB_classification_predict, as.factor(test_data_RT$good_reaction))
+```
+```{r}
+mean(RT_NB_classification_predict == test_data_RT$good_reaction)
+kable(confusionMatrix(RT_NB_classification_predict, as.factor(test_data_RT$good_reaction))$table)
+```
+
+For the test data, the model is approximately 80.6% accurate. Overall, this was 
+a relatively successful classification exercise. 
