@@ -7,4 +7,3 @@ The repository includes the following:
 - The cleaned data for the report. 
 - R Markdown script related to data analysis. 
 - R Markdown script related to compiling and formatting the final report. 
-- All PNG files of data visualization outputs that were used in the final report. 
